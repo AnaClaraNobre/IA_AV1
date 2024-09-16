@@ -12,8 +12,25 @@ def perturb(x, e):
     x2_new = np.clip(x[1] + np.random.uniform(-e, e), -5.12, 5.12)  
     return [x1_new, x2_new]
 
+# Função para mostrar o gráfico ao encontrar um novo valor mínimo
+def mostrar_grafico(x_opt, f_opt):
+    x1_range = np.linspace(-5.12, 5.12, 400)
+    x2_range = np.linspace(-5.12, 5.12, 400)
+    x1_grid, x2_grid = np.meshgrid(x1_range, x2_range)
+    z_grid = f([x1_grid, x2_grid])
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot_surface(x1_grid, x2_grid, z_grid, cmap='viridis', alpha=0.6)
+    ax.scatter(x_opt[0], x_opt[1], f_opt, color='g', marker='x', s=100)  
+    ax.set_xlabel('x1')
+    ax.set_ylabel('x2')
+    ax.set_zlabel('f(x1, x2)')
+    plt.title(f'Novo valor mínimo: f(x1, x2) = {f_opt}')
+    plt.show()
+
 # Função para executar o Hill Climbing com gráficos
-def hill_climbing(e, max_it, max_viz, t, plot_graphs=False):
+def hill_climbing(e, max_it, max_viz, t):
     x_opt = [np.random.uniform(-5.12, 5.12), np.random.uniform(-5.12, 5.12)]  
     f_opt = f(x_opt)
     
@@ -45,41 +62,6 @@ def hill_climbing(e, max_it, max_viz, t, plot_graphs=False):
         x1_vals.append(x_opt[0])
         x2_vals.append(x_opt[1])
 
-    # Mostrar gráficos se necessário
-    if plot_graphs:
-        # Gráfico 1: Evolução do valor mínimo ao longo das iterações
-        plt.figure()
-        plt.plot(valores)
-        plt.xlabel('Iterações')
-        plt.ylabel('Valor da função')
-        plt.title('Evolução do valor mínimo')
-        plt.show()
-
-        # Gráfico 2: Trajetória da busca no espaço 2D
-        plt.figure()
-        plt.scatter(x1_vals, x2_vals, c='r', marker='x')
-        plt.scatter(x_opt[0], x_opt[1], color='g', marker='x', s=100, linewidth=3)  
-        plt.xlabel('x1')
-        plt.ylabel('x2')
-        plt.title('Trajetória da busca no espaço 2D')
-        plt.show()
-
-        # Gráfico 3: Superfície 3D da função e ponto final em verde
-        x1_range = np.linspace(-5.12, 5.12, 400)
-        x2_range = np.linspace(-5.12, 5.12, 400)
-        x1_grid, x2_grid = np.meshgrid(x1_range, x2_range)
-        z_grid = f([x1_grid, x2_grid])
-
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        ax.plot_surface(x1_grid, x2_grid, z_grid, cmap='viridis', alpha=0.6)
-        ax.scatter(x_opt[0], x_opt[1], f_opt, color='g', marker='x', s=100)  
-        ax.set_xlabel('x1')
-        ax.set_ylabel('x2')
-        ax.set_zlabel('f(x1, x2)')
-        plt.title('Gráfico da função')
-        plt.show()
-
     return [round(x, 3) for x in x_opt], round(f_opt, 3)
 
 # Definir parâmetros
@@ -93,21 +75,22 @@ resultados = []
 melhor_solucao = None
 melhor_valor = float('inf')
 
-# Executar o algoritmo R vezes e mostrar gráficos da última execução
+# Executar o algoritmo R vezes e mostrar o gráfico quando um novo valor mínimo for encontrado
 for r in range(R):
-    if r == R - 1:  
-        x_result, f_result = hill_climbing(e, max_it, max_viz, t, plot_graphs=True)
-    else:
-        x_result, f_result = hill_climbing(e, max_it, max_viz, t)
+    print(f"\nExecução {r + 1}/{R}:")
+    x_result, f_result = hill_climbing(e, max_it, max_viz, t)
     
     resultados.append(f_result)
 
+    # Se o resultado atual for melhor que o melhor valor global até agora, exibir o gráfico
     if f_result < melhor_valor:
         melhor_valor = f_result
         melhor_solucao = x_result
+        # Mostrar o gráfico quando uma nova solução melhor for encontrada
+        mostrar_grafico(melhor_solucao, melhor_valor)
 
 # Exibir a melhor solução encontrada após todas as execuções
-print(f"Melhor solução encontrada: x1 = {melhor_solucao[0]}, x2 = {melhor_solucao[1]}")
+print(f"\nMelhor solução encontrada: x1 = {melhor_solucao[0]}, x2 = {melhor_solucao[1]}")
 print(f"Valor mínimo da função: {melhor_valor}")
 
 resultado_mais_frequente = Counter(resultados).most_common(1)[0]
