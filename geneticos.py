@@ -1,125 +1,158 @@
-import random
 import numpy as np
-from deap import base, creator, tools, algorithms
+import matplotlib.pyplot as plt
 
-# Parâmetros
-A = 10
-P = 20  # Dimensão do problema
-LIMIT = 100  # Número de gerações
-BOUND_LOW, BOUND_UP = -10.0, 10.0
 
 # Função de Rastrigin
-def rastrigin(individual):
-    # Verificar se os valores do indivíduo são reais
-    assert all(isinstance(x, float) for x in individual), "Indivíduo contém valores não reais!"
-    return A * P + sum((x ** 2 - A * np.cos(2 * np.pi * x)) for x in individual),
+def rastrigin(X):
+    A = 10
+    n = len(X)
+    return A * n + sum([(x**2 - A * np.cos(2 * np.pi * x)) for x in X])
 
-# Criando as classes para a função de aptidão e o indivíduo
-creator.create("FitnessMin", base.Fitness, weights=(-1.0,))  # Minimização
-creator.create("Individual", list, fitness=creator.FitnessMin)
+# # Algoritmo Genético
+# class GeneticAlgorithm:
+#     def __init__(self, pop_size, num_generations, mutation_rate, crossover_rate, dimension, bounds):
+#         self.pop_size = pop_size
+#         self.num_generations = num_generations
+#         self.mutation_rate = mutation_rate
+#         self.crossover_rate = crossover_rate
+#         self.dimension = dimension
+#         self.bounds = bounds
+#         self.population = self.initialize_population()
 
-# Função para criar um indivíduo
-def create_individual():
-    # Garantir que os indivíduos são gerados corretamente dentro dos limites
-    individual = [random.uniform(BOUND_LOW, BOUND_UP) for _ in range(P)]
-    return creator.Individual(individual)
+#     def initialize_population(self):
+#         return np.random.uniform(self.bounds[0], self.bounds[1], (self.pop_size, self.dimension))
 
-# Função para criar a população
-def create_population(n):
-    return [create_individual() for _ in range(n)]
+#     def evaluate(self, population):
+#         return np.array([rastrigin(individual) for individual in population])
 
-# Primeiro Algoritmo Genético
-def run_genetic_algorithm_1():
-    toolbox = base.Toolbox()
-    
-    # Registro das operações
-    toolbox.register("individual", create_individual)
-    toolbox.register("population", create_population, n=300)
-    toolbox.register("evaluate", rastrigin)
-    toolbox.register("mate", tools.cxBlend, alpha=0.5)  # Recombinacao blend crossover
-    toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=1, indpb=0.2)  # Mutacao Gaussiana
-    toolbox.register("select", tools.selRoulette)  # Seleção por roleta
-    toolbox.register("map", map)
-    
-    # Definindo a população
-    pop = toolbox.population()
-    
-    # Estatísticas
-    stats = tools.Statistics(lambda ind: ind.fitness.values)
-    stats.register("min", np.min)
-    stats.register("max", np.max)
-    stats.register("mean", np.mean)
-    stats.register("std", np.std)
-    
-    # Executando o algoritmo
-    pop, logbook = algorithms.eaSimple(pop, toolbox, cxpb=0.85, mutpb=0.2, ngen=LIMIT, 
-                                       stats=stats, verbose=True)
-    
-    return pop, logbook
+#     def select_parents(self, fitness):
+#         indices = np.argsort(fitness)
+#         return self.population[indices[:2]]  # Seleciona os 2 melhores
 
-# Segundo Algoritmo Genético
-def run_genetic_algorithm_2():
-    toolbox = base.Toolbox()
-    
-    # Registro das operações
-    toolbox.register("individual", create_individual)
-    toolbox.register("population", create_population, n=300)
-    toolbox.register("evaluate", rastrigin)
-    toolbox.register("mate", tools.cxSimulatedBinaryBounded, low=BOUND_LOW, up=BOUND_UP, eta=10.0)  # Crossover SBX
-    toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=1, indpb=0.2)  # Mutacao Gaussiana
-    toolbox.register("select", tools.selTournament, tournsize=3)  # Seleção por torneio
-    toolbox.register("map", map)
-    
-    # Definindo a população
-    pop = toolbox.population()
-    
-    # Estatísticas
-    stats = tools.Statistics(lambda ind: ind.fitness.values)
-    stats.register("min", np.min)
-    stats.register("max", np.max)
-    stats.register("mean", np.mean)
-    stats.register("std", np.std)
-    
-    # Executando o algoritmo
-    pop, logbook = algorithms.eaSimple(pop, toolbox, cxpb=0.85, mutpb=0.2, ngen=LIMIT, 
-                                       stats=stats, verbose=True)
-    
-    return pop, logbook
+#     def crossover(self, parent1, parent2):
+#         if np.random.rand() < self.crossover_rate:
+#             point = np.random.randint(1, self.dimension - 1)
+#             return np.concatenate((parent1[:point], parent2[point:]))
+#         return parent1
 
-# Função para coletar estatísticas de 100 rodadas
-def collect_statistics(runs=100):
-    stats_1 = []
-    stats_2 = []
-    
-    for _ in range(runs):
-        _, logbook_1 = run_genetic_algorithm_1()
-        _, logbook_2 = run_genetic_algorithm_2()
-        
-        min_fit_1 = logbook_1.select("min")[-1]
-        max_fit_1 = logbook_1.select("max")[-1]
-        mean_fit_1 = logbook_1.select("mean")[-1]
-        std_fit_1 = logbook_1.select("std")[-1]
-        
-        min_fit_2 = logbook_2.select("min")[-1]
-        max_fit_2 = logbook_2.select("max")[-1]
-        mean_fit_2 = logbook_2.select("mean")[-1]
-        std_fit_2 = logbook_2.select("std")[-1]
-        
-        stats_1.append((min_fit_1, max_fit_1, mean_fit_1, std_fit_1))
-        stats_2.append((min_fit_2, max_fit_2, mean_fit_2, std_fit_2))
-    
-    return stats_1, stats_2
+#     def mutate(self, individual):
+#         for i in range(self.dimension):
+#             if np.random.rand() < self.mutation_rate:
+#                 individual[i] += np.random.uniform(-0.5, 0.5)
+#         return individual
 
-# Execução dos algoritmos e coleta de estatísticas
-stats_algo1, stats_algo2 = collect_statistics()
+#     def evolve(self):
+#         for generation in range(self.num_generations):
+#             fitness = self.evaluate(self.population)
+#             new_population = []
 
-# Exibição dos resultados
-print("Resultados do Algoritmo Genético 1:")
-print("Mínimo, Máximo, Média, Desvio Padrão")
-for stats in stats_algo1:
-    print(stats)
+#             for _ in range(self.pop_size // 2):  # Gerar nova população
+#                 parents = self.select_parents(fitness)
+#                 child1 = self.mutate(self.crossover(parents[0], parents[1]))
+#                 child2 = self.mutate(self.crossover(parents[1], parents[0]))
+#                 new_population.extend([child1, child2])
 
-print("\nResultados do Algoritmo Genético 2:")
-print("Mínimo, Máximo, Média, Desvio Padrão")
-for stats in stats_algo2:
-    print(stats)
+#             self.population = np.array(new_population)
+
+#             best_fitness = np.min(fitness)
+#             best_individual = self.population[np.argmin(fitness)]
+#             print(f"Geração {generation}: Melhor valor da função = {best_fitness}, Melhor indivíduo = {best_individual}")
+
+# # Parâmetros
+# pop_size = 100
+# num_generations = 200
+# mutation_rate = 0.1
+# crossover_rate = 0.7
+# dimension = 10
+# bounds = (-5.12, 5.12)  # Limites típicos para a função de Rastrigin
+
+# # Executar Algoritmo Genético
+# ga = GeneticAlgorithm(pop_size, num_generations, mutation_rate, crossover_rate, dimension, bounds)
+# ga.evolve()
+
+# Algoritmo Genético
+class GeneticAlgorithm:
+    def __init__(self, pop_size, num_generations, mutation_rate, crossover_rate, dimension, bounds):
+        self.pop_size = pop_size
+        self.num_generations = num_generations
+        self.mutation_rate = mutation_rate
+        self.crossover_rate = crossover_rate
+        self.dimension = dimension
+        self.bounds = bounds
+        self.population = self.initialize_population()
+        self.best_fitness_history = []  # Armazena o histórico do melhor fitness de cada geração
+
+    def initialize_population(self):
+        return np.random.uniform(self.bounds[0], self.bounds[1], (self.pop_size, self.dimension))
+
+    def evaluate(self, population):
+        return np.array([rastrigin(individual) for individual in population])
+
+    def select_parents(self, fitness):
+        indices = np.argsort(fitness)
+        return self.population[indices[:2]]  # Seleciona os 2 melhores
+
+    def crossover(self, parent1, parent2):
+        if np.random.rand() < self.crossover_rate:
+            point = np.random.randint(1, self.dimension - 1)
+            return np.concatenate((parent1[:point], parent2[point:]))
+        return parent1
+
+    def mutate(self, individual):
+        for i in range(self.dimension):
+            if np.random.rand() < self.mutation_rate:
+                individual[i] += np.random.uniform(-0.5, 0.5)
+        return individual
+
+    def evolve(self):
+        for generation in range(self.num_generations):
+            fitness = self.evaluate(self.population)
+            new_population = []
+
+            for _ in range(self.pop_size // 2):  # Gerar nova população
+                parents = self.select_parents(fitness)
+                child1 = self.mutate(self.crossover(parents[0], parents[1]))
+                child2 = self.mutate(self.crossover(parents[1], parents[0]))
+                new_population.extend([child1, child2])
+
+            self.population = np.array(new_population)
+
+            best_fitness = np.min(fitness)
+            best_individual = self.population[np.argmin(fitness)]
+            self.best_fitness_history.append(best_fitness)  # Armazenar o melhor valor da função
+            print(f"Geração {generation}: Melhor valor da função = {best_fitness}, Melhor indivíduo = {best_individual}")
+
+        # Após a evolução, plotar o gráfico do histórico de melhores fitness
+        self.plot_fitness_history()
+
+    def plot_fitness_history(self):
+        # Plotar o histórico de fitness
+        plt.figure(figsize=(10, 6))
+        plt.plot(self.best_fitness_history, label='Melhor Fitness (mínimo)')
+        plt.title('Evolução do Melhor Fitness ao Longo das Gerações')
+        plt.xlabel('Geração')
+        plt.ylabel('Melhor Fitness')
+        plt.grid(True)
+        plt.legend()
+        plt.show()
+
+# Parâmetros
+pop_size = 100
+num_generations = 100
+mutation_rate = 0.1
+crossover_rate = 0.7
+dimension = 10
+bounds = (-5.12, 5.12)  # Limites típicos para a função de Rastrigin
+
+# Executar Algoritmo Genético
+ga = GeneticAlgorithm(pop_size, num_generations, mutation_rate, crossover_rate, dimension, bounds)
+ga.evolve()
+
+# Após a execução, verificar se encontrou o mínimo global
+minimo_global = 0  # O valor conhecido do mínimo global da função de Rastrigin é 0
+melhor_valor = ga.best_fitness_history[-1]  # Pega o último melhor valor da função
+
+if abs(melhor_valor - minimo_global) < 1e-6:
+    print(f"Encontrou o mínimo global: {melhor_valor}")
+else:
+    print(f"Mínimo encontrado não é o global, valor encontrado: {melhor_valor}")
