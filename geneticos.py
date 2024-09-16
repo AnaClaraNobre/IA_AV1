@@ -62,14 +62,18 @@ class GeneticAlgorithmBinary:
             child1 = parent1[:point] + parent2[point:]
             child2 = parent2[:point] + parent1[point:]
         return parent1, parent2
-
-    def mutate(self, chromosome):
-        chromosome = list(chromosome)  # Convert to list for easier mutation
-        for i in range(len(chromosome)):
-            if np.random.rand() < self.mutation_rate:
-                chromosome[i] = '1' if chromosome[i] == '0' else '0'
-        return ''.join(chromosome)
     
+    def mutate(self, chromosome):
+        if np.random.rand() < self.mutation_rate:
+            return self.mutate_inversion(chromosome)        
+        return chromosome
+    
+    def mutate_inversion(self,cromossomo):
+        cromossomo = list(cromossomo)  # Convert para lista para fácil manipulação      
+        start, end = sorted(np.random.choice(len(cromossomo), 2, replace=False))
+        cromossomo[start:end] = reversed(cromossomo[start:end])
+        return ''.join(cromossomo)
+
     def select_parents(self, fitness):
         total_fitness = np.sum(fitness)
         probabilities = fitness/total_fitness
