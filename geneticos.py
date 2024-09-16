@@ -111,7 +111,7 @@ class GeneticAlgorithmBinary:
 pop_size = 100
 num_generations = 200
 mutation_rate = 0.01
-crossover_rate = 0.7
+crossover_rate = 0.9
 dimension = 20  # p = 20
 bounds = (-10, 10)  # Limites de restrição [-10, 10]
 bits_per_variable = 16  # Número de bits para codificar cada variável
