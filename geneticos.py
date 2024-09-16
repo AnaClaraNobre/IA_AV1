@@ -68,20 +68,23 @@ class GeneticAlgorithmBinary:
             if np.random.rand() < self.mutation_rate:
                 chromosome[i] = '1' if chromosome[i] == '0' else '0'
         return ''.join(chromosome)
+    
+    def select_parents(self, fitness):
+        total_fitness = np.sum(fitness)
+        probabilities = fitness/total_fitness
 
+        selected_indices = np.random.choice(np.arange(self.pop_size),size=2,p=probabilities)
+        return [self.population[idx] for idx in selected_indices]
+    
     def evolve(self):
         for generation in range(self.num_generations):
             fitness = self.evaluate(self.population)
             new_population = []
 
-            # Seleciona os dois melhores indivíduos
-            indices = np.argsort(fitness)
-            best_parents = [self.population[indices[0]], self.population[indices[1]]]
-
             for _ in range(self.pop_size // 2):  # Gerar nova população
-                parent1, parent2 = best_parents
-                child1 = self.mutate(self.crossover(parent1, parent2))
-                child2 = self.mutate(self.crossover(parent2, parent1))
+                parents = self.select_parents(fitness)
+                child1 = self.mutate(self.crossover(parents[0], parents[1]))
+                child2 = self.mutate(self.crossover(parents[1], parents[0]))
                 new_population.extend([child1, child2])
 
             self.population = new_population
