@@ -59,8 +59,9 @@ class GeneticAlgorithmBinary:
     def crossover(self, parent1, parent2):
         if np.random.rand() < self.crossover_rate:
             point = np.random.randint(1, self.bits_per_variable * self.dimension - 1)
-            return parent1[:point] + parent2[point:]
-        return parent1
+            child1 = parent1[:point] + parent2[point:]
+            child2 = parent2[:point] + parent1[point:]
+        return parent1, parent2
 
     def mutate(self, chromosome):
         chromosome = list(chromosome)  # Convert to list for easier mutation
@@ -83,14 +84,12 @@ class GeneticAlgorithmBinary:
 
             for _ in range(self.pop_size // 2):  # Gerar nova população
                 parents = self.select_parents(fitness)
-                child1 = self.mutate(self.crossover(parents[0], parents[1]))
-                child2 = self.mutate(self.crossover(parents[1], parents[0]))
-                new_population.extend([child1, child2])
+                child1, child2 = self.crossover(parents[0], parents[1])                
+                new_population.extend([self.mutate(child1), self.mutate(child2)])
 
             self.population = new_population
 
-            best_fitness = np.min(fitness)
-            best_individual = self.population[np.argmin(fitness)]
+            best_fitness = np.min(fitness)            
             self.best_fitness_history.append(best_fitness)  # Armazenar o melhor valor da função
             print(f"Geração {generation}: Melhor valor da função = {best_fitness}")
 
