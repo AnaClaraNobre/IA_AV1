@@ -20,6 +20,10 @@ def rastrigin(X):
     p = len(X)
     return A * p + sum([(x**2 - A * np.cos(2 * np.pi * x)) for x in X])
 
+#Função de Aptidão Ψ(x) = f (x) + 1.
+def fitness_function(X):
+    return rastrigin(X) + 1
+
 # Algoritmo Genético com Representação Cromossômica Canônica
 class GeneticAlgorithmBinary:
     def __init__(self, pop_size, num_generations, mutation_rate, crossover_rate, dimension, bounds, bits_per_variable):
@@ -39,7 +43,7 @@ class GeneticAlgorithmBinary:
 
     def evaluate(self, population):
         real_population = [self.decode_chromosome(chromosome) for chromosome in population]
-        return np.array([rastrigin(individual) for individual in real_population])
+        return np.array([fitness_function(individual) for individual in real_population])
 
     def decode_chromosome(self, chromosome):
         # Dividir o cromossomo binário em segmentos para cada variável
