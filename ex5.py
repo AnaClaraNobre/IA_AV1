@@ -8,7 +8,6 @@ def f(x):
     x1, x2 = x[0], x[1]
     return (x1 * np.cos(x1)) / 20 + 2 * np.exp(-(x1**2 + (x2 - 1)**2)) + 0.01 * x1 * x2
 
-# Função de perturbação para gerar vizinhos aleatórios no domínio [-10, 10]
 def perturb(x, e):
     x1_new = np.clip(x[0] + np.random.uniform(-e, e), -10, 10) 
     x2_new = np.clip(x[1] + np.random.uniform(-e, e), -10, 10)  
