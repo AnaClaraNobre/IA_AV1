@@ -67,7 +67,7 @@ class GeneticAlgorithmFloatSBX:
         for i in range(self.dimension):
             if np.random.rand() < self.mutation_rate:
                 # Realizar mutação, alterando ligeiramente o valor da variável
-                individual[i] += np.random.uniform(-0.1, 0.1)
+                individual[i] += np.random.uniform(0, 0.1)
                 # Garantir que o valor da variável permaneça dentro dos limites
                 individual[i] = np.clip(individual[i], self.bounds[0], self.bounds[1])
         return individual
