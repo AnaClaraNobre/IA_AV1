@@ -81,7 +81,11 @@ class GeneticAlgorithmBinary:
         selected_indices = np.random.choice(np.arange(self.pop_size),size=2,p=probabilities)
         return [self.population[idx] for idx in selected_indices]
     
+    #Número de geração sem melhoria
     def evolve(self):
+        no_improvement_count = 0
+        max_no_improvement = 50
+
         for generation in range(self.num_generations):
             fitness = self.evaluate(self.population)
             new_population = []
@@ -95,6 +99,15 @@ class GeneticAlgorithmBinary:
 
             best_fitness = np.min(fitness)            
             self.best_fitness_history.append(best_fitness)  # Armazenar o melhor valor da função
+
+            if generation > 0 and best_fitness >= self.best_fitness_history[-2]:
+                no_improvement_count += 1
+                if no_improvement_count >= max_no_improvement:
+                    print(f"Convergência detectada na geração {generation}.")
+                    break
+            else:
+                no_improvement_count = 0
+
             print(f"Geração {generation}: Melhor valor da função = {best_fitness}")
 
         self.plot_fitness_history()
