@@ -49,11 +49,11 @@ class GeneticAlgorithmFloat:
         return individual
 
     def select_parents(self, fitness):
-        total_fitness = np.sum(fitness)
-        probabilities = fitness / total_fitness
-        selected_indices = np.random.choice(np.arange(self.pop_size), size=2, p=probabilities)
-        return [self.population[idx] for idx in selected_indices]
-
+        tournament_indices = np.random.choice(np.arange(self.pop_size),size=tournament_size)
+        tournament_fitness = fitness[tournament_indices]
+        winner_idx = tournament_indices[np.argmin(tournament_fitness)]
+        return self.population[winner_idx]
+    
     # Critério de parada baseado no número de gerações sem melhoria
     def evolve(self):
         no_improvement_count = 0
@@ -64,8 +64,9 @@ class GeneticAlgorithmFloat:
             new_population = []
 
             for _ in range(self.pop_size // 2):  # Gerar nova população
-                parents = self.select_parents(fitness)
-                child1, child2 = self.crossover(parents[0], parents[1])
+                parent1 = self.select_parents(fitness)
+                parent2 = self.select_parents(fitness)
+                child1, child2 = self.crossover(parent1, parent2)
                 new_population.extend([self.mutate(child1), self.mutate(child2)])
 
             self.population = np.array(new_population)
@@ -103,6 +104,7 @@ mutation_rate = 0.01
 crossover_rate = 0.9
 dimension = 20  # p = 20
 bounds = (-10, 10)  # Limites de restrição [-10, 10]
+tournament_size = 5
 
 # Executar Algoritmo Genético com Representação em Ponto Flutuante
 ga_float = GeneticAlgorithmFloat(pop_size, num_generations, mutation_rate, crossover_rate, dimension, bounds)
