@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -50,7 +51,7 @@ def local_random_search_with_plot(n_iterations, bounds, std_dev, patience):
     return best, best_eval
 
 # Parâmetros
-R = 30  # Número de repetições
+R = 100
 std_dev = 0.1
 patience = 100
 n_iterations = 10000
@@ -58,6 +59,7 @@ bounds = [-100, 100]
 melhor_solucao_lrs = None
 melhor_valor_lrs = float('inf')
 resultados_lrs = []
+tempo_total_inicio = time.time()
 
 # Executar o algoritmo Local Random Search (LRS)
 for r in range(R):
@@ -65,13 +67,19 @@ for r in range(R):
     x_result_lrs, f_result_lrs = local_random_search_with_plot(n_iterations, bounds, std_dev, patience)
 
     resultados_lrs.append(f_result_lrs)
+    
+    print(f"Rodada {r + 1}: Solução = {x_result_lrs}, f(x) = {f_result_lrs:.6f}")
+
 
     if f_result_lrs < melhor_valor_lrs:
         melhor_valor_lrs = f_result_lrs
         melhor_solucao_lrs = x_result_lrs
 
+tempo_total_fim = time.time()
+tempo_total = tempo_total_fim - tempo_total_inicio
+
 # Exibir a melhor solução e o resultado mais frequente
-print(f"\nMelhor solução encontrada: x1 = {melhor_solucao_lrs[0]:.3f}, x2 = {melhor_solucao_lrs[1]:.3f}")
+print(f"\nMelhor solução encontrada: x1 = {melhor_solucao_lrs[0]:.6f}, x2 = {melhor_solucao_lrs[1]:.6f}")
 print(f"Valor mínimo da função: {melhor_valor_lrs:.6f}")
 
 # Mostrar o gráfico da melhor solução encontrada
@@ -79,3 +87,4 @@ mostrar_grafico_lrs(melhor_solucao_lrs, melhor_valor_lrs)
 
 resultado_mais_frequente_lrs = Counter(resultados_lrs).most_common(1)[0]
 print(f"O resultado mais frequente foi {resultado_mais_frequente_lrs[0]:.6f}, encontrado {resultado_mais_frequente_lrs[1]} vezes.")
+print(f"\nTempo total de execução: {tempo_total:.4f} segundos")

@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -6,7 +7,6 @@ from collections import Counter
 # Função a ser minimizada (com reescalonamento)
 def f(x):
     x1, x2 = x[0], x[1]
-    # Reescalonamento dos expoentes para evitar overflow
     term1 = -np.sin(x1) * np.sin((x1**2 / np.pi)**(2**4))  # aqui foi reduzido pq tava dando erro pq tava mt grande
     term2 = -np.sin(x2) * np.sin((2 * x2**2 / np.pi)**(2**4)) # aqui foi reduzido pq tava dando erro pq tava mt grande
     return term1 + term2
@@ -68,16 +68,17 @@ def hill_climbing(e, max_it, max_viz, t):
 
     return [round(x, 3) for x in x_opt], round(f_opt, 3)
 
-# Definir parâmetros
+# parâmetros
 e = 0.1  
-max_it = 10000  # Número máximo de iterações
+max_it = 10000  
 max_viz = 20 
 t = 100  
-R = 50  
+R = 100 
 
 resultados = []
 melhor_solucao = None
 menor_valor = float('inf') 
+tempo_total_inicio = time.time()
 
 # Executar o algoritmo R vezes e mostrar o gráfico quando um novo valor mínimo for encontrado
 for r in range(R):
@@ -85,6 +86,7 @@ for r in range(R):
     x_result, f_result = hill_climbing(e, max_it, max_viz, t)
     
     resultados.append(f_result)
+    print(f"Rodada {r + 1}: Solução = {x_result}, f(x) = {f_result}")
 
     # Se o resultado atual for menor que o menor valor global até agora, exibir o gráfico
     if f_result < menor_valor:
@@ -92,7 +94,8 @@ for r in range(R):
         melhor_solucao = x_result
         # Mostrar o gráfico quando uma nova solução melhor for encontrada
         mostrar_grafico(melhor_solucao, menor_valor)
-
+tempo_total_fim = time.time()
+tempo_total = tempo_total_fim - tempo_total_inicio
 # Exibir a melhor solução encontrada após todas as execuções
 print(f"\nMelhor solução encontrada: x1 = {melhor_solucao[0]}, x2 = {melhor_solucao[1]}")
 print(f"Valor mínimo da função: {menor_valor}")
@@ -101,3 +104,4 @@ resultado_mais_frequente = Counter(resultados).most_common(1)[0]
 
 # Exibir o resultado mais frequente
 print(f"O resultado mais frequente foi {resultado_mais_frequente[0]} encontrado {resultado_mais_frequente[1]} vezes.")
+print(f"\nTempo total de execução: {tempo_total:.4f} segundos")
