@@ -5,14 +5,13 @@ from collections import Counter
 import time 
 
 
-# Função a ser minimizada
+# Função utilizada
 def f(x):
     return x[0]**2 + x[1]**2
 
 # Função de perturbação que gera vizinhos aleatórios em torno da solução atual
 def perturb(x, e):
     x_new = [x[0] + np.random.uniform(-e, e), x[1] + np.random.uniform(-e, e)]
-    # Impor as restrições de caixa
     x_new[0] = np.clip(x_new[0], -100, 100)
     x_new[1] = np.clip(x_new[1], -100, 100)
     return x_new
