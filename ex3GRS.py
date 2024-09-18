@@ -33,17 +33,16 @@ def mostrar_grafico(x_opt, f_opt):
     plt.title(f'Novo valor mínimo: f(x1, x2) = {f_opt:.6f}')
     plt.show()
 
-# Função para executar o Local Random Search com gráficos
-def local_random_search(n_iterations, patience, plot_graphs=False):
+# Função para executar o Global Random Search com gráficos
+def global_random_search(n_iterations, plot_graphs=False):
     x_opt = gerar_candidato()  # Solução inicial aleatória
     f_opt = f(x_opt)
     
-    sem_melhoria = 0  
     valores = [f_opt]
     x1_vals, x2_vals = [], []  
 
     for i in range(n_iterations):
-        # Gerar um novo candidato aleatório
+        # Gerar um novo candidato aleatório no espaço total de busca
         x_cand = gerar_candidato()
         f_cand = f(x_cand)
         
@@ -51,13 +50,6 @@ def local_random_search(n_iterations, patience, plot_graphs=False):
             x_opt = x_cand
             f_opt = f_cand
             valores.append(f_opt)
-            sem_melhoria = 0  
-        else:
-            sem_melhoria += 1
-        
-        # Critério de parada por iterações sem melhoria
-        if sem_melhoria >= patience:
-            break
 
         x1_vals.append(x_opt[0])
         x2_vals.append(x_opt[1])
@@ -101,7 +93,6 @@ def local_random_search(n_iterations, patience, plot_graphs=False):
 
 # parâmetros
 n_iterations = 10000  
-patience = 100  
 R = 100 
 
 resultados = []
@@ -109,10 +100,10 @@ melhor_solucao = None
 melhor_valor = float('inf')
 tempo_total_inicio = time.time()
 
-# Executar o algoritmo R vezes e mostrar o gráfico quando um novo valor mínimo for encontrado
+# Executar o algoritmo GRS R vezes e mostrar o gráfico quando um novo valor mínimo for encontrado
 for r in range(R):
     print(f"\nExecução {r + 1}/{R}:")
-    x_result, f_result = local_random_search(n_iterations, patience)
+    x_result, f_result = global_random_search(n_iterations)
     
     resultados.append(f_result)
     print(f"Rodada {r + 1}: Solução = {x_result}, f(x) = {f_result}")
@@ -121,10 +112,10 @@ for r in range(R):
     if f_result < melhor_valor:
         melhor_valor = f_result
         melhor_solucao = x_result
-        # Mostrar o gráfico quando uma nova solução melhor for encontrada
 
 tempo_total_fim = time.time()
 tempo_total = tempo_total_fim - tempo_total_inicio
+
 # Exibir a melhor solução encontrada após todas as execuções
 print(f"\nMelhor solução encontrada: x1 = {melhor_solucao[0]}, x2 = {melhor_solucao[1]}")
 print(f"Valor mínimo da função: {melhor_valor}")
