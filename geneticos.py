@@ -1,146 +1,216 @@
 import numpy as np
+import random
+import pandas as pd
 import matplotlib.pyplot as plt
 
-# Função para converter binário para número real
-def bin_to_real(binary, bounds, bits_per_variable):
-    lower_bound, upper_bound = bounds
-    decimal = int(binary, 2)
-    max_decimal = 2**bits_per_variable - 1
-    return lower_bound + (upper_bound - lower_bound) * decimal / max_decimal
+# Função de Rastrigin
+def rastrigin(x, A=10):
+    p = len(x)
+    return A * p + sum([(xi**2 - A * np.cos(2 * np.pi * xi)) for xi in x])
 
-# Função para converter real para binário
-def real_to_bin(value, bounds, bits_per_variable):
-    lower_bound, upper_bound = bounds
-    decimal = int((value - lower_bound) / (upper_bound - lower_bound) * (2**bits_per_variable - 1))
-    return format(decimal, f'0{bits_per_variable}b')
+# Função de Aptidão
+def fitness_function(x):
+    return rastrigin(x) + 1  # Ψ(x) = f(x) + 1
 
-# Função de Rastrigin com constante A
-def rastrigin(X):
-    A = 10
-    p = len(X)
-    return A * p + sum([(x**2 - A * np.cos(2 * np.pi * x)) for x in X])
+# Inicialização da população binária
+def initialize_population_binary(pop_size, n_genes):
+    return [np.random.randint(2, size=n_genes) for _ in range(pop_size)]
 
-#Função de Aptidão Ψ(x) = f (x) + 1.
-def fitness_function(X):
-    return rastrigin(X) + 1
+# Decodificação binária para valores reais
+def binary_to_real(binary_individual, min_val=-10, max_val=10):
+    # Converte o array binário em uma string e depois em um número decimal
+    binary_str = ''.join(binary_individual.astype(str))
+    decimal = int(binary_str, 2)
+    # Normaliza o decimal para o intervalo [min_val, max_val]
+    return min_val + (max_val - min_val) * decimal / (2**len(binary_individual) - 1)
 
-# Algoritmo Genético com Representação Cromossômica Canônica
-class GeneticAlgorithmBinary:
-    def __init__(self, pop_size, num_generations, mutation_rate, crossover_rate, dimension, bounds, bits_per_variable):
-        self.pop_size = pop_size
-        self.num_generations = num_generations
-        self.mutation_rate = mutation_rate
-        self.crossover_rate = crossover_rate
-        self.dimension = dimension
-        self.bounds = bounds
-        self.bits_per_variable = bits_per_variable
-        self.population = self.initialize_population()
-        self.best_fitness_history = []  # Armazena o histórico do melhor fitness de cada geração
+# Inicialização da população em ponto flutuante
+def initialize_population_float(pop_size, n_genes):
+    return [np.random.uniform(-10, 10, n_genes) for _ in range(pop_size)]
 
-    def initialize_population(self):
-        # Inicializar população como strings binárias
-        return [''.join(np.random.choice(['0', '1'], self.bits_per_variable * self.dimension)) for _ in range(self.pop_size)]
+# Avaliação da aptidão (fitness) para binário
+def evaluate_population_binary(population):
+    decoded_population = [binary_to_real(individual) for individual in population]
+    return [fitness_function([decoded_population[i]]) for i in range(len(decoded_population))]
 
-    def evaluate(self, population):
-        real_population = [self.decode_chromosome(chromosome) for chromosome in population]
-        return np.array([fitness_function(individual) for individual in real_population])
+# Avaliação da aptidão (fitness) para ponto flutuante
+def evaluate_population_float(population):
+    return [fitness_function(individual) for individual in population]
 
-    def decode_chromosome(self, chromosome):
-        # Dividir o cromossomo binário em segmentos para cada variável
-        real_values = []
-        for i in range(self.dimension):
-            start = i * self.bits_per_variable
-            end = start + self.bits_per_variable
-            binary_segment = chromosome[start:end]
-            real_value = bin_to_real(binary_segment, self.bounds, self.bits_per_variable)
-            real_values.append(real_value)
-        return real_values
+# Seleção por roleta
+def roulette_wheel_selection(population, fitness):
+    total_fitness = sum(fitness)
+    probs = [f / total_fitness for f in fitness]
+    selected = []
+    for _ in range(len(population)):
+        selected.append(population[np.random.choice(range(len(population)), p=probs)])
+    return selected
 
-    def crossover(self, parent1, parent2):
-        if np.random.rand() < self.crossover_rate:
-            point = np.random.randint(1, self.bits_per_variable * self.dimension - 1)
-            child1 = parent1[:point] + parent2[point:]
-            child2 = parent2[:point] + parent1[point:]
-        return parent1, parent2
+# Crossover de um ponto para binário
+def crossover_binary(parent1, parent2):
+    if random.random() < 0.9:  # 90% de taxa de crossover
+        point = random.randint(1, len(parent1) - 1)
+        child1 = np.concatenate((parent1[:point], parent2[point:]))
+        child2 = np.concatenate((parent2[:point], parent1[point:]))
+        return child1, child2
+    return parent1, parent2
+
+# Mutação binária
+def mutate_binary(individual, mutation_rate=0.01):
+    for i in range(len(individual)):
+        if random.random() < mutation_rate:
+            individual[i] = 1 - individual[i]  # Mutação binária
+    return individual
+
+# Algoritmo Genético 1 (Binário)
+def genetic_algorithm_binary(pop_size=100, n_genes=20, n_generations=1000, mutation_rate=0.01, tol=1e-6):
+    population = initialize_population_binary(pop_size, n_genes)
+    best_fitness = float('inf')
     
-    def mutate(self, chromosome):
-        if np.random.rand() < self.mutation_rate:
-            return self.mutate_inversion(chromosome)        
-        return chromosome
-    
-    def mutate_inversion(self,cromossomo):
-        cromossomo = list(cromossomo)  # Convert para lista para fácil manipulação      
-        start, end = sorted(np.random.choice(len(cromossomo), 2, replace=False))
-        cromossomo[start:end] = reversed(cromossomo[start:end])
-        return ''.join(cromossomo)
+    for generation in range(n_generations):
+        # Avaliar população
+        fitness = evaluate_population_binary(population)
+        
+        # Verificar convergência
+        current_best_fitness = min(fitness)
+        if abs(best_fitness - current_best_fitness) < tol:
+            break
+        best_fitness = current_best_fitness
+        
+        # Seleção por roleta
+        selected = roulette_wheel_selection(population, fitness)
+        
+        # Gerar nova população com crossover e mutação
+        next_population = []
+        for i in range(0, len(selected), 2):
+            parent1, parent2 = selected[i], selected[i + 1]
+            child1, child2 = crossover_binary(parent1, parent2)
+            next_population.append(mutate_binary(child1, mutation_rate))
+            next_population.append(mutate_binary(child2, mutation_rate))
+        
+        population = next_population
+        
+    # Decodificar a população final e obter o melhor indivíduo
+    decoded_population = [binary_to_real(individual) for individual in population]
+    fitness = evaluate_population_binary(population)
+    best_individual = decoded_population[np.argmin(fitness)]
+    return best_individual, best_fitness
 
-    def select_parents(self, fitness):
-        total_fitness = np.sum(fitness)
-        probabilities = fitness/total_fitness
-
-        selected_indices = np.random.choice(np.arange(self.pop_size),size=2,p=probabilities)
-        return [self.population[idx] for idx in selected_indices]
-    
-    #Número de geração sem melhoria
-    def evolve(self):
-        no_improvement_count = 0
-        max_no_improvement = 50
-
-        for generation in range(self.num_generations):
-            fitness = self.evaluate(self.population)
-            new_population = []
-
-            for _ in range(self.pop_size // 2):  # Gerar nova população
-                parents = self.select_parents(fitness)
-                child1, child2 = self.crossover(parents[0], parents[1])                
-                new_population.extend([self.mutate(child1), self.mutate(child2)])
-
-            self.population = new_population
-
-            best_fitness = np.min(fitness)            
-            self.best_fitness_history.append(best_fitness)  # Armazenar o melhor valor da função
-
-            if generation > 0 and best_fitness >= self.best_fitness_history[-2]:
-                no_improvement_count += 1
-                if no_improvement_count >= max_no_improvement:
-                    print(f"Convergência detectada na geração {generation}.")
-                    break
+# Simulated Binary Crossover (SBX) para ponto flutuante
+def sbx_crossover(parent1, parent2, eta=1.0):
+    child1, child2 = np.copy(parent1), np.copy(parent2)
+    if random.random() < 0.9:  # Taxa de crossover > 85%
+        for i in range(len(parent1)):
+            u = random.random()
+            if u <= 0.5:
+                beta = (2 * u) ** (1 / (eta + 1))
             else:
-                no_improvement_count = 0
+                beta = (1 / (2 * (1 - u))) ** (1 / (eta + 1))
+            child1[i] = 0.5 * ((1 + beta) * parent1[i] + (1 - beta) * parent2[i])
+            child2[i] = 0.5 * ((1 - beta) * parent1[i] + (1 + beta) * parent2[i])
+    return child1, child2
 
-            print(f"Geração {generation}: Melhor valor da função = {best_fitness}")
+# Mutação Gaussiana para ponto flutuante
+def gaussian_mutation(individual, mutation_rate=0.01, sigma=0.1):
+    for i in range(len(individual)):
+        if random.random() < mutation_rate:
+            individual[i] += np.random.normal(0, sigma)  # Mutação Gaussiana
+    return individual
 
-        self.plot_fitness_history()
+# Seleção por Torneio
+def tournament_selection(population, fitness, k=3):
+    selected = []
+    for _ in range(len(population)):
+        aspirants = random.sample(list(zip(population, fitness)), k)
+        selected.append(min(aspirants, key=lambda x: x[1])[0])
+    return selected
 
-    def plot_fitness_history(self):
-        # Plotar o histórico de fitness
-        plt.figure(figsize=(10, 6))
-        plt.plot(self.best_fitness_history, label='Melhor Fitness (mínimo)')
-        plt.title('Evolução do Melhor Fitness ao Longo das Gerações')
-        plt.xlabel('Geração')
-        plt.ylabel('Melhor Fitness')
-        plt.grid(True)
-        plt.legend()
-        plt.show()
+# Algoritmo Genético 2 (Ponto Flutuante)
+def genetic_algorithm_float(pop_size=100, n_genes=20, n_generations=1000, mutation_rate=0.01, tol=1e-6):
+    population = initialize_population_float(pop_size, n_genes)
+    best_fitness = float('inf')
+    
+    for generation in range(n_generations):
+        # Avaliar população
+        fitness = evaluate_population_float(population)
+        
+        # Verificar convergência
+        current_best_fitness = min(fitness)
+        if abs(best_fitness - current_best_fitness) < tol:
+            break
+        best_fitness = current_best_fitness
+        
+        # Seleção por torneio
+        selected = tournament_selection(population, fitness)
+        
+        # Gerar nova população com crossover SBX e mutação Gaussiana
+        next_population = []
+        for i in range(0, len(selected), 2):
+            parent1, parent2 = selected[i], selected[i + 1]
+            child1, child2 = sbx_crossover(parent1, parent2)
+            next_population.append(gaussian_mutation(child1, mutation_rate))
+            next_population.append(gaussian_mutation(child2, mutation_rate))
+        
+        population = next_population
+        
+    best_individual = population[np.argmin(fitness)]
+    return best_individual, best_fitness
 
-# Parâmetros
-pop_size = 100
-num_generations = 200
-mutation_rate = 0.01
-crossover_rate = 0.9
-dimension = 20  # p = 20
-bounds = (-10, 10)  # Limites de restrição [-10, 10]
-bits_per_variable = 16  # Número de bits para codificar cada variável
+# Função para rodar várias execuções do algoritmo genético e coletar as estatísticas
+def run_multiple_executions(algorithm_func, n_executions=100):
+    results = []
+    
+    for _ in range(n_executions):
+        _, best_fitness = algorithm_func()
+        results.append(best_fitness)
+    
+    # Calcular estatísticas
+    min_fitness = np.min(results)
+    max_fitness = np.max(results)
+    mean_fitness = np.mean(results)
+    std_fitness = np.std(results)
+    
+    return min_fitness, max_fitness, mean_fitness, std_fitness
 
-# Executar Algoritmo Genético
-ga_binary = GeneticAlgorithmBinary(pop_size, num_generations, mutation_rate, crossover_rate, dimension, bounds, bits_per_variable)
-ga_binary.evolve()
+# Executar 100 vezes para o algoritmo binário
+min_fit_1, max_fit_1, mean_fit_1, std_fit_1 = run_multiple_executions(genetic_algorithm_binary)
 
-# Verificar se encontrou o mínimo global
-minimo_global = 0  # O valor conhecido do mínimo global da função de Rastrigin é 0
-melhor_valor = ga_binary.best_fitness_history[-1]  # Pega o último melhor valor da função
+# Executar 100 vezes para o algoritmo ponto flutuante
+min_fit_2, max_fit_2, mean_fit_2, std_fit_2 = run_multiple_executions(genetic_algorithm_float)
 
-if abs(melhor_valor - minimo_global) < 1e-6:
-    print(f"Encontrou o mínimo global: {melhor_valor}")
-else:
-    print(f"Mínimo encontrado não é o global, valor encontrado: {melhor_valor}")
+# Exibir tabela comparativa
+# print("Comparação dos Algoritmos Genéticos:")
+# print(f"{'Métrica':<20} {'Algoritmo 1 (Binário)':<20} {'Algoritmo 2 (Flutuante)':<20}")
+# print(f"{'Menor valor':<20} {min_fit_1:<20} {min_fit_2:<20}")
+# print(f"{'Maior valor':<20} {max_fit_1:<20} {max_fit_2:<20}")
+# print(f"{'Média':<20} {mean_fit_1:<20} {mean_fit_2:<20}")
+# print(f"{'Desvio Padrão':<20} {std_fit_1:<20} {std_fit_2:<20}")
+
+# Criar DataFrame com os resultados
+results_df = pd.DataFrame({
+    'Métrica': ['Menor valor', 'Maior valor', 'Média', 'Desvio Padrão'],
+    'Algoritmo 1 (Binário)': [min_fit_1, max_fit_1, mean_fit_1, std_fit_1],
+    'Algoritmo 2 (Flutuante)': [min_fit_2, max_fit_2, mean_fit_2, std_fit_2]
+})
+
+# Exibir a tabela comparativa
+print("Comparação dos Algoritmos Genéticos:\n")
+print(results_df)
+
+# Plotar gráficos
+fig, ax = plt.subplots(1, 1, figsize=(10, 6))
+
+# Gráfico de Linhas para métricas
+metrics = ['Menor valor', 'Maior valor', 'Média', 'Desvio Padrão']
+bin_values = [min_fit_1, max_fit_1, mean_fit_1, std_fit_1]
+float_values = [min_fit_2, max_fit_2, mean_fit_2, std_fit_2]
+
+ax.plot(metrics, bin_values, marker='o', linestyle='-', color='b', label='Algoritmo 1 (Binário)')
+ax.plot(metrics, float_values, marker='o', linestyle='-', color='r', label='Algoritmo 2 (Flutuante)')
+ax.set_xlabel('Métricas')
+ax.set_ylabel('Valor')
+ax.set_title('Comparação dos Algoritmos Genéticos')
+ax.legend()
+
+plt.tight_layout()
+plt.show()
