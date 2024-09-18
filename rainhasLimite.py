@@ -115,14 +115,13 @@ def executar_tempera_simulada():
     
     start_time = time.time()
     
-    tipo_escalonamento = 'geometrico'  #'linear', 'logaritmico'
+    tipo_escalonamento = 'logaritmico'  #'linear', 'logaritmico'
     
     # Rodar o algoritmo até encontrar as 92 soluções ou atingir o máximo de execuções
     while len(solucoes) < max_solucoes and total_iteracoes < max_execucoes_gerais:
-        # Gerar um estado inicial completamente aleatório
+        # Gerar um estado inicial aleatório
         estado_inicial = [random.randint(0, 7) for _ in range(8)]
         
-        # Executa a Têmpera Simulada com perturbação parsimoniosa
         solucao = tempera_simulada_parsimoniosa(estado_inicial, temperatura_inicial, resfriamento, temperatura_final, max_iteracoes, tipo_escalonamento, contador_estados)
         #item 5
         if calcular_fx(solucao) == 28:

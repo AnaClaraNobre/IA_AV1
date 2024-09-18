@@ -4,32 +4,31 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time
 
-def contar_conflitos(board):
+def contar_conflitos(tab):
     conflitos = 0
-    n = len(board)
+    n = len(tab)
     
     for i in range(n):
         for j in range(i + 1, n):
             # Verifica se as rainhas estão na mesma linha ou na mesma diagonal
-            if board[i] == board[j] or abs(board[i] - board[j]) == abs(i - j):
+            if tab[i] == tab[j] or abs(tab[i] - tab[j]) == abs(i - j):
                 conflitos += 1
     return conflitos
 
 # numero 1
 # Função que retorna f(x) = 28 - h(x), onde h(x) é o número de conflitos
-def calcular_fx(board):
-    return 28 - contar_conflitos(board)
+def calcular_fx(tab):
+    return 28 - contar_conflitos(tab)
 
-# Função de perturbação parsimoniosa
-def perturbar_parsimonioso(board):
-    new_board = board[:]
-    n = len(board)
+# perturbação parsimoniosa
+def perturbar_parsimonioso(tab):
+    new_board = tab[:]
+    n = len(tab)
     
     # Escolhe uma rainha aleatória para mover
     i = random.randint(0, n - 1)
     
-    # Muda a rainha para uma linha vizinha (mantendo a perturbação controlada)
-    nova_linha = new_board[i] + random.choice([-1, 1])  # Move para uma linha próxima (acima ou abaixo)
+    nova_linha = new_board[i] + random.choice([-1, 1])  # Move para uma linha próxima
     
     # para que a rainha não saia dos limites do tabuleiro
     if nova_linha < 0:
@@ -74,8 +73,8 @@ def tempera_simulada_parsimoniosa(board_inicial, temperatura_inicial, resfriamen
     return estado_atual
 
 # desenhar o tabuleiro(grafico)
-def desenhar_tabuleiro(board):
-    n = len(board)
+def desenhar_tabuleiro(tab):
+    n = len(tab)
     fig, ax = plt.subplots(figsize=(6, 6))
     ax.set_xticks(np.arange(0.5, n, 1))
     ax.set_yticks(np.arange(0.5, n, 1))
@@ -89,7 +88,7 @@ def desenhar_tabuleiro(board):
             color = 'white' if (i + j) % 2 == 0 else 'gray'
             ax.add_patch(plt.Rectangle((i, j), 1, 1, color=color))
 
-    for col, row in enumerate(board):
+    for col, row in enumerate(tab):
         ax.text(col + 0.5, row + 0.5, '♕', ha='center', va='center', fontsize=24, color='black')
 
     plt.grid(True)
@@ -112,14 +111,13 @@ tempos_de_execucao = []
 
 start_time = time.time()
 
-tipo_escalonamento = 'geometrico'  #'linear', 'logaritmico'
+tipo_escalonamento = 'linear'  #'linear', 'logaritmico'
 
 # Rodar o algoritmo até encontrar as 92 soluções ou atingir o máximo de execuções
 while len(solucoes) < max_solucoes and total_iteracoes < max_execucoes_gerais:
-    # Gerar um estado inicial completamente aleatório
+    # Gerar um estado inicial  aleatório
     estado_inicial = [random.randint(0, 7) for _ in range(8)]
     
-    # Executa a Têmpera Simulada com perturbação parsimoniosa e tipo de escalonamento selecionado
     solucao = tempera_simulada_parsimoniosa(estado_inicial, temperatura_inicial, resfriamento, temperatura_final, max_iteracoes, tipo_escalonamento, contador_estados)
     
     # Se a solução não tiver conflitos, adiciona à lista de soluções
